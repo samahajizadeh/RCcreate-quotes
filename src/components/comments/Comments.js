@@ -1,50 +1,51 @@
-import React, { useCallback, useEffect, useState } from "react";
-import useHttp from "../../hooks/use-http";
+import React, { useState, useCallback, useEffect } from "react";
+import useHttp from "../../hooks/use-http2";
 import classes from "./Comments.module.css";
 import CommentsList from "./CommentsList";
 import NewCommentForm from "./NewCommentForm";
+import { getAllComments } from "../../lib/api";
+import { useParams } from "react-router";
+import Loading from "../UI/Loadding";
 
 const Comments = () => {
   const [isAddingComment, setIsAddingComment] = useState(false);
-  const [comment, setComment] = useState("");
-  const { isLoading, sendRequest } = useHttp();
+
+  const { sendRequest, status, data: loadedComment } = useHttp(getAllComments);
+
+  const params = useParams();
+  const { quoteId } = params;
+
   useEffect(() => {
-    const getData = (data) => {
-      let commentArray = [];
-      for (let key in data) {
-        commentArray.push({ id: key, text: data[key].text });
-      }
-      setComment(commentArray);
-    };
+    sendRequest(quoteId);
+  }, [quoteId, sendRequest]);
 
-    const timeOut = setTimeout(()=>{
-      sendRequest(
-        {
-          url: "https://react-movies-d52dd-default-rtdb.firebaseio.com/comments.json",
-        },
-        getData
-      );
-    },0)
-    
-    return()=>{
-      clearInterval(timeOut)
-    }
-  }, [sendRequest]);
+  const addedCommentHandler = useCallback(() => {
+    sendRequest(quoteId);
+  }, [sendRequest, quoteId]);
 
-  const addComment = useCallback((data) => {
-    setComment((prevComment) => prevComment.concat(data));
-  }, []);
   const startAddCommentHandler = () => {
     setIsAddingComment(true);
   };
 
-  let contentComment = <p>there is not message</p>;
-  if (comment) {
-    contentComment = <CommentsList comments={comment} />;
+  let contentComment;
+
+  if (status === "completed" && loadedComment && loadedComment.length > 0) {
+    contentComment = <CommentsList comments={loadedComment} />;
   }
 
-  if (isLoading) {
-    contentComment = <p>Loading....</p>;
+  if (
+    status === "completed" &&
+    (!loadedComment || loadedComment.length === 0)
+  ) {
+    contentComment = <p className="centered">No comments were added yet!</p>;
+  }
+
+  if (status === "pending") {
+    contentComment = (
+      <div className="centered">
+        <Loading />
+      </div>
+    );
   }
   return (
     <section className={classes.comments}>
@@ -55,7 +56,7 @@ const Comments = () => {
         </button>
       )}
 
-      {isAddingComment && <NewCommentForm onAddComment={addComment} />}
+      {isAddingComment && <NewCommentForm onAddComment={addedCommentHandler} />}
       {contentComment}
     </section>
   );

@@ -1,42 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect} from "react";
 import NoQuotesFound from "../components/quotes/NoQuotesFound";
 import QuoteList from "../components/quotes/QuoteList ";
 import Loading from "../components/UI/Loadding";
-import useHttp from "../hooks/use-http";
+import useHttp from "../hooks/use-http2";
+import {getAllQuotes} from '../lib/api';
 
 
-const AllQuotes = (props) => {
-  const [quotes, setQuotes] = useState("");
-  const { isLoading, isError, sendRequest } = useHttp();
-  useEffect(() => {
-    const getData = (data) => {
-      const quoteArray = [];
-      for (let key in data) {
-        quoteArray.push({ id: key, ...data[key] });
-      }
-      setQuotes(quoteArray);
-    };
-
-    sendRequest({ url: "https://react-movies-d52dd-default-rtdb.firebaseio.com/quotes.json"}, getData);
-  }, [sendRequest]);
-
+const AllQuotes = () => {
+  const {sendRequest,status,error,data:loadedQuotes} = useHttp(getAllQuotes,true)
+  useEffect(()=>{
+    sendRequest()
+  },[sendRequest]);
   
-  let content = <NoQuotesFound />;
-
-  if (quotes.length>0) {
-    content = <QuoteList quotes={quotes} />;
+ 
+  if (status === 'completed' && (!loadedQuotes || loadedQuotes.length === 0)){
+    return <NoQuotesFound/>
   }
-  if (isLoading) {
-    content = (
+
+ 
+  if (status === 'pending') {
+    return(
       <div className="loading">
         <Loading />
       </div>
     );
   }
-  if (isError) {
-    content = <p className="centered">{isError}</p>;
+  if (error) {
+    return <p className="centered">{error}</p>;
   }
-  return <div>{content}</div>;
+  return <QuoteList quotes={loadedQuotes} />;
 };
 
 export default AllQuotes;

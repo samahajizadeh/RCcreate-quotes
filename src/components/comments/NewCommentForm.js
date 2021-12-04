@@ -1,47 +1,44 @@
 import React, { useEffect, useRef } from "react";
-import classes from './NewCommentForm.module.css';
-import useHttp from '../../hooks/use-http'
+import classes from "./NewCommentForm.module.css";
+import useHttp from "../../hooks/use-http2";
+import { addComment } from "../../lib/api";
+import { useParams } from "react-router";
 
-const NewCommentForm =(props) =>{
-    const commentTextRef = useRef();
-  
+const NewCommentForm = (props) => {
+  const commentTextRef = useRef();
+  const params = useParams();
+  const { quoteId } = params;
+  const { sendRequest, status, error } = useHttp(addComment);
 
-    const {isLoading,Status,sendRequest} =useHttp()
-    const submitFormHandler =(event) =>{
-        event.preventDefault();
-        const comment=commentTextRef.current.value;
-        const commentsValue = {text:comment}
+  const { onAddComment } = props;
+  useEffect(() => {
 
-        const transformData =(Data) =>{
-          const generateId =Data.name;
-          props.onAddComment({id:generateId,...commentsValue});
-        }
-        sendRequest({ url: "https://react-movies-d52dd-default-rtdb.firebaseio.com/comments.json",
-        method: "POST",
-        headers: { "Content-Type": "applicaton/json" },
-        body: commentsValue},transformData)
-        commentTextRef.current.value="";
+    if (status === "completed" && !error) {
+      onAddComment();
     }
+  }, [status, onAddComment, error]);
 
-    const {onAddComment} = props;
-    useEffect(()=>{
-      if(Status === 'ok'){
-        onAddComment();
-      }
-    },[Status,onAddComment])
-    
-  
+  const submitFormHandler = (event) => {
+    event.preventDefault();
+    const comment = commentTextRef.current.value;
+    const commentsValue = { quoteId: quoteId, commentData:{text :comment} };
 
-   return(
+    sendRequest(commentsValue);
+    commentTextRef.current.value = "";
+  };
+
+  return (
     <form className={classes.form} onSubmit={submitFormHandler}>
-    <div className={classes.control} onSubmit={submitFormHandler}>
-      <label htmlFor='comment'>Your Comment</label>
-      <textarea id='comment' rows='5' ref={commentTextRef}></textarea>
-    </div>
-    <div className={classes.actions}>
-      <button className='btn'>{isLoading ? "...Loading" :"Add Comment"}</button>
-    </div>
-  </form>
-   )
-}
+      <div className={classes.control} onSubmit={submitFormHandler}>
+        <label htmlFor="comment">Your Comment</label>
+        <textarea id="comment" rows="5" ref={commentTextRef}></textarea>
+      </div>
+      <div className={classes.actions}>
+        <button className="btn">
+          {status === "pending" ? "...Loading" : "Add Comment"}
+        </button>
+      </div>
+    </form>
+  );
+};
 export default NewCommentForm;

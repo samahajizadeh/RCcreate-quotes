@@ -1,42 +1,27 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import QuoteForm from "../components/quotes/QuoteForm";
-import useHttp from "../hooks/use-http";
+import useHttp from "../hooks/use-http2";
+import { addQuote } from "../lib/api";
 
 const NewQuote = () => {
   let navigate = useNavigate();
-  const { isLoading,Status, sendRequest } = useHttp();
+  const {sendRequest,status}=useHttp(addQuote)
 
 
   const newQouteHandler =  (quoteData) => {
-    const transformData = (data) => {
-    
-      const generate = data.name;
-    
-      const creatData = { id: generate, ...quoteData };
-      console.log(creatData)
-    }
-  
-    sendRequest(
-      {
-        url: "https://react-movies-d52dd-default-rtdb.firebaseio.com/quotes.json",
-        method: "POST",
-        headers: { "Content-Type": "applicaton/json" },
-        body: quoteData,
-      },
-      transformData
-    );
+    sendRequest(quoteData);
    
   };
   useEffect(()=>{
-    if(Status === "OK"){
+    if(status === "completed"){
       navigate("/quotes")
     }
     return ()=>{
       console.log('CleanUp')
     }
-  },[Status,navigate])
-  return <QuoteForm onAddQuote={newQouteHandler} isLoading={isLoading} />;
+  },[status,navigate])
+  return <QuoteForm onAddQuote={newQouteHandler} isLoading={status === 'pending'} />;
 };
 
 export default NewQuote;

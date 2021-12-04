@@ -1,60 +1,54 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect} from "react";
 import {
   Route,
   Routes,
   Link,
   useParams,
   Outlet,
-  useNavigate,
   useLocation,
 } from "react-router-dom";
 import HighlightedQuote from "../components/quotes/HighlightedQuote";
 import Loading from "../components/UI/Loadding";
-import useHttp from "../hooks/use-http";
-
+import useHttp from "../hooks/use-http2";
+import { getSingleQuote } from "../lib/api";
 
 const QuoteDetail = () => {
-  
-  const [quotes, setQuotes] = useState([]);
 
   const params = useParams();
   const location = useLocation();
   const { pathname } = location;
-  const navigate = useNavigate()
+  const { quoteId } = params;
 
-  const { isError, isLoading, sendRequest } = useHttp();
+  const {
+    sendRequest,
+    status,
+    data: loadedQuote,
+    error,
+  } = useHttp(getSingleQuote, true);
 
   useEffect(() => {
-    const getData = (data) => {
-      const quoteArray = [];
-      for (let key in data) {
-        quoteArray.push({ id: key, ...data[key] });
-      }
+    sendRequest(quoteId);
+  }, [sendRequest, quoteId]);
 
-      setQuotes(quoteArray);
-    };
-    sendRequest(
-      {
-        url: "https://react-movies-d52dd-default-rtdb.firebaseio.com/quotes.json",
-      },
-      getData
+
+   if (status === "pending") {
+    return (
+      <div className="loading">
+        <Loading />
+      </div>
     );
-  }, [sendRequest]);
+  }
+  if (error) {
+    return <p>{error}</p>;
+  }
+  if (!loadedQuote.text) {
+    return <p>No quote found!</p>;
+  }
 
-
-  let contentDetail = <p>NotFound</p>;
- 
-  if (quotes.length>0) {
-    let quote = [];
-    quote = quotes.findIndex((quote) => quote.id === params.quoteId);
-    if(quote> -1){
-      quote =quotes[quote]
-    }else{
-      navigate('/404')
-    }
-    contentDetail =<Fragment>
+  return (
+    <Fragment>
       <div>
-        <HighlightedQuote text={quote.text} author={quote.author} />       
+        <HighlightedQuote text={loadedQuote.text} author={loadedQuote.author} />
         <Routes>
           <Route
             index
@@ -70,19 +64,7 @@ const QuoteDetail = () => {
         <Outlet />
       </div>
     </Fragment>
-  }
-
-  if(isLoading){
-    contentDetail =<div className="loading">
-          <Loading />
-        </div>
-  }
-  if(isError){
-    contentDetail = <p>{isError}</p>
-  }
-
-
-  return contentDetail;
+  );
 };
 
 export default QuoteDetail;

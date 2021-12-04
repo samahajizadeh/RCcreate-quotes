@@ -7,7 +7,7 @@ const CommentsList = (props) => {
     return (
       <ul className={classes.comments}>
         {props.comments.map((comment) => (
-          <CommentItem key={comment.id} text={comment.text} />
+          <CommentItem key={comment.quoteId} text={comment.text} />
         ))}
       </ul>
     );
