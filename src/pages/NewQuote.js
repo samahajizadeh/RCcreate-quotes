@@ -8,7 +8,7 @@ const NewQuote = () => {
   const { isLoading,Status, sendRequest } = useHttp();
 
 
-  const newQouteHandler = (quoteData) => {
+  const newQouteHandler =  (quoteData) => {
     const transformData = (data) => {
     
       const generate = data.name;
@@ -31,6 +31,9 @@ const NewQuote = () => {
   useEffect(()=>{
     if(Status === "OK"){
       navigate("/quotes")
+    }
+    return ()=>{
+      console.log('CleanUp')
     }
   },[Status,navigate])
   return <QuoteForm onAddQuote={newQouteHandler} isLoading={isLoading} />;

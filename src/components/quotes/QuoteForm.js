@@ -1,4 +1,4 @@
-import { Fragment, useRef } from "react";
+import { Fragment, useEffect, useRef } from "react";
 
 
 import Card from "../UI/Card";
@@ -11,6 +11,7 @@ const QuoteForm = (props) => {
   const textInputRef = useRef();
 
   function submitFormHandler(event) {
+    debugger
     event.preventDefault();
 
     const enteredAuthor = authorInputRef.current.value;
@@ -20,6 +21,19 @@ const QuoteForm = (props) => {
 
     props.onAddQuote({ author: enteredAuthor, text: enteredText });
   }
+
+  useEffect(() => {
+    const listener = event => {
+      if (event.code === "Enter" || event.code === "NumpadEnter") {
+        console.log("Enter key was pressed. Run your function.");
+        submitFormHandler(event);
+      }
+    };
+    document.addEventListener("keydown", listener);
+    return () => {
+      document.removeEventListener("keydown", listener);
+    };
+  }, []);
 
   const formFocusHandler = () => {
     console.log("Focus");
